@@ -19,7 +19,6 @@ use Illuminate\Support\Traits\Conditionable;
 use Illuminate\Support\Traits\ForwardsCalls;
 use Illuminate\Support\Traits\Localizable;
 use Illuminate\Support\Traits\Macroable;
-use Illuminate\Support\Traits\Tappable;
 use Illuminate\Testing\Constraints\SeeInOrder;
 use PHPUnit\Framework\Assert as PHPUnit;
 use ReflectionClass;
@@ -30,7 +29,7 @@ use Symfony\Component\Mime\Address;
 
 class Mailable implements MailableContract, Renderable
 {
-    use Conditionable, ForwardsCalls, Localizable, Tappable, Macroable {
+    use Conditionable, ForwardsCalls, Localizable, Macroable {
         __call as macroCall;
     }
 
@@ -353,19 +352,7 @@ class Mailable implements MailableContract, Renderable
             }
         }
 
-        return array_merge($data, $this->additionalMessageData());
-    }
-
-    /**
-     * Get additional meta-data to pass along with the view data.
-     *
-     * @return array<string, mixed>
-     */
-    protected function additionalMessageData(): array
-    {
-        return [
-            '__laravel_mailable' => get_class($this),
-        ];
+        return $data;
     }
 
     /**
@@ -739,7 +726,7 @@ class Mailable implements MailableContract, Renderable
             ];
         }
 
-        $this->{$property} = (new Collection($this->{$property}))
+        $this->{$property} = collect($this->{$property})
             ->reverse()
             ->unique('address')
             ->reverse()
@@ -819,7 +806,7 @@ class Mailable implements MailableContract, Renderable
             return true;
         }
 
-        return (new Collection($this->{$property}))->contains(function ($actual) use ($expected) {
+        return collect($this->{$property})->contains(function ($actual) use ($expected) {
             if (! isset($expected['name'])) {
                 return $actual['address'] == $expected['address'];
             }
@@ -965,7 +952,7 @@ class Mailable implements MailableContract, Renderable
             return $file->attachTo($this, $options);
         }
 
-        $this->attachments = (new Collection($this->attachments))
+        $this->attachments = collect($this->attachments)
                     ->push(compact('file', 'options'))
                     ->unique('file')
                     ->all();
@@ -1027,7 +1014,7 @@ class Mailable implements MailableContract, Renderable
                 : $parts;
         }
 
-        return (new Collection($this->attachments))->contains(
+        return collect($this->attachments)->contains(
             fn ($attachment) => $attachment['file'] === $file && array_filter($attachment['options']) === array_filter($options)
         );
     }
@@ -1047,7 +1034,7 @@ class Mailable implements MailableContract, Renderable
 
         $attachments = $this->attachments();
 
-        return (new Collection(is_object($attachments) ? [$attachments] : $attachments))
+        return Collection::make(is_object($attachments) ? [$attachments] : $attachments)
                 ->map(fn ($attached) => $attached instanceof Attachable ? $attached->toMailAttachment() : $attached)
                 ->contains(fn ($attached) => $attached->isEquivalent($attachment, $options));
     }
@@ -1076,14 +1063,14 @@ class Mailable implements MailableContract, Renderable
      */
     public function attachFromStorageDisk($disk, $path, $name = null, array $options = [])
     {
-        $this->diskAttachments = (new Collection($this->diskAttachments))->push([
+        $this->diskAttachments = collect($this->diskAttachments)->push([
             'disk' => $disk,
             'path' => $path,
             'name' => $name ?? basename($path),
             'options' => $options,
-        ])
-            ->unique(fn ($file) => $file['name'].$file['disk'].$file['path'])
-            ->all();
+        ])->unique(function ($file) {
+            return $file['name'].$file['disk'].$file['path'];
+        })->all();
 
         return $this;
     }
@@ -1112,7 +1099,7 @@ class Mailable implements MailableContract, Renderable
      */
     public function hasAttachmentFromStorageDisk($disk, $path, $name = null, array $options = [])
     {
-        return (new Collection($this->diskAttachments))->contains(
+        return collect($this->diskAttachments)->contains(
             fn ($attachment) => $attachment['disk'] === $disk
                 && $attachment['path'] === $path
                 && $attachment['name'] === ($name ?? basename($path))
@@ -1130,10 +1117,11 @@ class Mailable implements MailableContract, Renderable
      */
     public function attachData($data, $name, array $options = [])
     {
-        $this->rawAttachments = (new Collection($this->rawAttachments))
-            ->push(compact('data', 'name', 'options'))
-            ->unique(fn ($file) => $file['name'].$file['data'])
-            ->all();
+        $this->rawAttachments = collect($this->rawAttachments)
+                ->push(compact('data', 'name', 'options'))
+                ->unique(function ($file) {
+                    return $file['name'].$file['data'];
+                })->all();
 
         return $this;
     }
@@ -1148,7 +1136,7 @@ class Mailable implements MailableContract, Renderable
      */
     public function hasAttachedData($data, $name, array $options = [])
     {
-        return (new Collection($this->rawAttachments))->contains(
+        return collect($this->rawAttachments)->contains(
             fn ($attachment) => $attachment['data'] === $data
                 && $attachment['name'] === $name
                 && array_filter($attachment['options']) === array_filter($options)
@@ -1163,7 +1151,7 @@ class Mailable implements MailableContract, Renderable
      */
     public function tag($value)
     {
-        $this->tags[] = $value;
+        array_push($this->tags, $value);
 
         return $this;
     }
@@ -1766,7 +1754,7 @@ class Mailable implements MailableContract, Renderable
 
         $attachments = $this->attachments();
 
-        (new Collection(is_object($attachments) ? [$attachments] : $attachments))
+        Collection::make(is_object($attachments) ? [$attachments] : $attachments)
             ->each(function ($attachment) {
                 $this->attach($attachment);
             });

@@ -154,7 +154,7 @@ class PusherBroadcaster extends Broadcaster
 
         $parameters = $socket !== null ? ['socket_id' => $socket] : [];
 
-        $channels = new Collection($this->formatChannels($channels));
+        $channels = Collection::make($this->formatChannels($channels));
 
         try {
             $channels->chunk(100)->each(function ($channels) use ($event, $payload, $parameters) {

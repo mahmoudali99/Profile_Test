@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Filesystem\Filesystem;
 use RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
 class Composer
@@ -64,11 +65,11 @@ class Composer
      */
     public function requirePackages(array $packages, bool $dev = false, Closure|OutputInterface|null $output = null, $composerBinary = null)
     {
-        $command = (new Collection([
+        $command = collect([
             ...$this->findComposer($composerBinary),
             'require',
             ...$packages,
-        ]))
+        ])
         ->when($dev, function ($command) {
             $command->push('--dev');
         })->all();
@@ -93,11 +94,11 @@ class Composer
      */
     public function removePackages(array $packages, bool $dev = false, Closure|OutputInterface|null $output = null, $composerBinary = null)
     {
-        $command = (new Collection([
+        $command = collect([
             ...$this->findComposer($composerBinary),
             'remove',
             ...$packages,
-        ]))
+        ])
         ->when($dev, function ($command) {
             $command->push('--dev');
         })->all();
@@ -203,7 +204,7 @@ class Composer
      */
     protected function phpBinary()
     {
-        return php_binary();
+        return ProcessUtils::escapeArgument((new PhpExecutableFinder)->find(false));
     }
 
     /**

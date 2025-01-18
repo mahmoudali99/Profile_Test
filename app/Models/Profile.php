@@ -9,24 +9,17 @@ class Profile extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'email',
         'bio',
         'birthday',
+        'avatar',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'birthday' => 'date',
+        'bio' => 'array',
     ];
 }
+

@@ -55,32 +55,32 @@ final class JunitXmlLogger
     private array $testSuites = [];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteTests = [0];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteAssertions = [0];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteErrors = [0];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteFailures = [0];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteSkipped = [0];
 
     /**
-     * @var array<int,int>
+     * @psalm-var array<int,int>
      */
     private array $testSuiteTimes        = [0];
     private int $testSuiteLevel          = 0;
@@ -185,11 +185,17 @@ final class JunitXmlLogger
         $this->createTestCase($event);
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function testPreparationFailed(): void
     {
         $this->preparationFailed = true;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function testPrepared(): void
     {
         $this->prepared = true;
@@ -429,7 +435,7 @@ final class JunitXmlLogger
     /**
      * @throws InvalidArgumentException
      *
-     * @phpstan-assert !null $this->currentTestCase
+     * @psalm-assert !null $this->currentTestCase
      */
     private function createTestCase(Errored|Failed|MarkedIncomplete|PreparationStarted|Prepared|Skipped $event): void
     {
