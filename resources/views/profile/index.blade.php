@@ -121,6 +121,7 @@
                     <div class="custom-field">
                         <input type="text" class="custom-field-name" placeholder="Field Name" value="{{ $customField['name'] }}">
                         <input type="text" class="custom-field-content" placeholder="Field Content" value="{{ $customField['content'] }}">
+                        <button class="remove-field">Remove</button>
                     </div>
                     @endforeach
                 @endif
@@ -194,34 +195,34 @@
 
     // Send data to API
     const sendPayload = async () => {
-    const payload = collectPayload();
-    const formData = new FormData();
-    formData.append('name', payload.name);
-    formData.append('email', payload.email);
-    formData.append('birthday', payload.birthday);
-    formData.append('bio', JSON.stringify(payload.bio));
+        const payload = collectPayload();
+        const formData = new FormData();
+        formData.append('name', payload.name);
+        formData.append('email', payload.email);
+        formData.append('birthday', payload.birthday);
+        formData.append('bio', JSON.stringify(payload.bio));
 
-    if (avatarUpload.files[0]) {
-        formData.append('avatar', avatarUpload.files[0]);
-    }
-
-    try {
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            body: formData
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-            document.getElementById("successMessage").textContent = "Profile updated successfully!";
-            document.getElementById("successMessage").style.display = "block";
-        } else {
-            console.error(result);
+        if (avatarUpload.files[0]) {
+            formData.append('avatar', avatarUpload.files[0]);
         }
-    } catch (error) {
-        console.error("Error:", error);
-    }
-};
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById("successMessage").textContent = "Profile updated successfully!";
+                document.getElementById("successMessage").style.display = "block";
+            } else {
+                console.error(result);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    };
 
     // Handle avatar upload
     avatar.addEventListener("click", () => avatarUpload.click());
@@ -254,17 +255,31 @@
         fieldDiv.innerHTML = `
             <input type="text" class="custom-field-name" placeholder="Field Name">
             <input type="text" class="custom-field-content" placeholder="Field Content">
+            <button class="remove-field">Remove</button>
         `;
 
         customFieldsContainer.appendChild(fieldDiv);
+
+        // Add event listener for the remove button
+        fieldDiv.querySelector(".remove-field").addEventListener("click", () => {
+            fieldDiv.remove();
+            sendPayload();
+        });
 
         // Send updated payload whenever custom fields are changed
         fieldDiv.querySelectorAll("input").forEach(input => {
             input.addEventListener("input", sendPayload);
         });
     });
-});
 
+    // Add event listeners for existing remove buttons
+    customFieldsContainer.querySelectorAll(".remove-field").forEach(button => {
+        button.addEventListener("click", (e) => {
+            e.target.parentElement.remove();
+            sendPayload();
+        });
+    });
+});
     </script>
 </body>
 </html>
